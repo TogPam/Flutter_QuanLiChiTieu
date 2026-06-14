@@ -570,6 +570,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           )
                         );
                         if (confirm != true) return;
+                      } else if (jar.budget > 0 && (jar.spentAmount + amount) >= (jar.budget * 0.9)) {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (c) => AlertDialog(
+                            backgroundColor: isDark ? const Color(0xFF1E1D2E) : Colors.white,
+                            title: Text('Sắp chạm hạn mức', style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold)),
+                            content: Text('Cảnh báo: Giao dịch này sẽ khiến bạn tiêu xài chạm mức 90% ngân sách của hũ. Bạn có muốn tiếp tục không?',
+                                style: TextStyle(color: textPrimary)),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Hủy')),
+                              TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('Tiếp tục', style: TextStyle(color: Colors.orange))),
+                            ],
+                          )
+                        );
+                        if (confirm != true) return;
                       }
                       Navigator.pop(ctx);
 
