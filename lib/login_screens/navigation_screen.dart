@@ -80,7 +80,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       final jarsList = await ApiService.getJars();
       if (jarsList != null && mounted) {
         setState(() {
-          _jars = jarsList.map((e) {
+          _jars = jarsList
+              .where((j) => (j['jar_type'] ?? j['JarType'] ?? 1) != 3)
+              .map((e) {
             final jarName = (e['jar_name'] ?? e['JarName'] ?? '') as String;
             final jarId = (e['jar_id'] ?? e['JarId'] ?? '') as String;
             return {

@@ -168,11 +168,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: theme.textTheme.bodySmall?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: isDark ? const Color(0xFFC7C4D8) : const Color(0xFF464555))),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                          child: const Text('Quên mật khẩu?', style: TextStyle(fontSize: 12.0, fontWeight: FontWeight.w600, color: Color(0xFF4F46E5))),
-                        ),
                       ]),
                       const SizedBox(height: 8.0),
                       TextFormField(

@@ -270,7 +270,7 @@ class ApiService {
   static Future<Map<String, dynamic>?> createJar(
     String name,
     double budget,
-    String jarType, {
+    int jarType, {
     String description = "",
   }) async {
     try {

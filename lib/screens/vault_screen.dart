@@ -36,15 +36,35 @@ class _VaultScreenState extends State<VaultScreen> with SingleTickerProviderStat
     if (jars != null && mounted) {
       setState(() {
         _isError = false;
-        _goals = jars.where((j) => (j['jar_type'] ?? j['JarType'] ?? 0) == 3).map((j) => {
-          'id': j['jar_id'] ?? j['JarId'],
-          'title': j['jar_name'] ?? j['JarName'] ?? 'Mục tiêu',
-          'subtitle': j['description'] ?? j['Description'] ?? 'Mục tiêu tiết kiệm',
-          'saved': j['spent_amount'] ?? j['SpentAmount'] ?? 0,
-          'target': j['budget'] ?? j['Budget'] ?? 0,
-          'days': 30,
-          'color': const Color(0xFF4B49EB),
-          'icon': Icons.account_balance_wallet_rounded,
+        _goals = jars.where((j) => (j['jar_type'] ?? j['JarType'] ?? 0) == 3).map((j) {
+          final descFull = (j['description'] ?? j['Description'] ?? 'Mục tiêu tiết kiệm|30').toString();
+          final descParts = descFull.split('|');
+          final subtitle = descParts[0].isEmpty ? 'Mục tiêu tiết kiệm' : descParts[0];
+          final datePart = descParts.length > 1 ? descParts[1] : '';
+          int days = 30;
+          if (datePart.contains('-')) {
+            final d = DateTime.tryParse(datePart);
+            if (d != null) {
+              final today = DateTime.now();
+              final todayMidnight = DateTime(today.year, today.month, today.day);
+              final targetMidnight = DateTime(d.year, d.month, d.day);
+              days = targetMidnight.difference(todayMidnight).inDays;
+              if (days < 0) days = 0;
+            }
+          } else {
+            days = int.tryParse(datePart) ?? 30;
+          }
+          
+          return {
+            'id': j['jar_id'] ?? j['JarId'],
+            'title': j['jar_name'] ?? j['JarName'] ?? 'Mục tiêu',
+            'subtitle': subtitle,
+            'saved': (j['spent_amount'] ?? j['SpentAmount'] ?? 0) + (j['income_amount'] ?? j['IncomeAmount'] ?? 0),
+            'target': j['budget'] ?? j['Budget'] ?? 0,
+            'days': days,
+            'color': const Color(0xFF4B49EB),
+            'icon': Icons.account_balance_wallet_rounded,
+          };
         }).toList();
       });
     }
@@ -61,13 +81,26 @@ class _VaultScreenState extends State<VaultScreen> with SingleTickerProviderStat
             final descFull = (j['description'] ?? j['Description'] ?? 'Mục tiêu tiết kiệm|30').toString();
             final descParts = descFull.split('|');
             final subtitle = descParts[0].isEmpty ? 'Mục tiêu tiết kiệm' : descParts[0];
-            final days = descParts.length > 1 ? (int.tryParse(descParts[1]) ?? 30) : 30;
+            final datePart = descParts.length > 1 ? descParts[1] : '';
+            int days = 30;
+            if (datePart.contains('-')) {
+              final d = DateTime.tryParse(datePart);
+              if (d != null) {
+                final today = DateTime.now();
+                final todayMidnight = DateTime(today.year, today.month, today.day);
+                final targetMidnight = DateTime(d.year, d.month, d.day);
+                days = targetMidnight.difference(todayMidnight).inDays;
+                if (days < 0) days = 0;
+              }
+            } else {
+              days = int.tryParse(datePart) ?? 30;
+            }
             
             return {
               'id': j['jar_id'] ?? j['JarId'],
               'title': j['jar_name'] ?? j['JarName'] ?? 'Mục tiêu',
               'subtitle': subtitle,
-              'saved': j['spent_amount'] ?? j['SpentAmount'] ?? 0,
+              'saved': (j['spent_amount'] ?? j['SpentAmount'] ?? 0) + (j['income_amount'] ?? j['IncomeAmount'] ?? 0),
               'target': j['budget'] ?? j['Budget'] ?? 0,
               'days': days,
               'color': const Color(0xFF4B49EB),
@@ -140,8 +173,8 @@ class _VaultScreenState extends State<VaultScreen> with SingleTickerProviderStat
               _field(savedCtrl, 'Đã tích lũy (đ)', Icons.savings_outlined, isDark, textPrimary,
                   inputType: TextInputType.number),
               const SizedBox(height: 12),
-              _field(daysCtrl, 'Số ngày còn lại', Icons.timer_outlined, isDark, textPrimary,
-                  inputType: TextInputType.number),
+              const SizedBox(height: 12),
+              // Đã loại bỏ Date Picker theo yêu cầu, cố định 32 ngày
               const SizedBox(height: 16),
               Text('Biểu tượng', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textSecondary)),
               const SizedBox(height: 10),
@@ -185,11 +218,12 @@ class _VaultScreenState extends State<VaultScreen> with SingleTickerProviderStat
                   if (title.isEmpty) return;
                   final target = double.tryParse(targetCtrl.text.trim()) ?? 0;
                   final subtitle = subtitleCtrl.text.trim();
-                  final days = int.tryParse(daysCtrl.text.trim()) ?? 30;
+                  // Cố định mục tiêu là 32 ngày tính từ lúc tạo
+                  final targetDateStr = DateTime.now().add(const Duration(days: 32)).toIso8601String();
                   Navigator.pop(ctx);
                   
                   // Gọi API tạo mục tiêu
-                  await ApiService.createJar(title, target, '3', description: '$subtitle|$days'); 
+                  await ApiService.createJar(title, target, 3, description: '$subtitle|$targetDateStr'); 
                   _fetchData();
                 },
                 style: ElevatedButton.styleFrom(
@@ -384,7 +418,100 @@ class _VaultScreenState extends State<VaultScreen> with SingleTickerProviderStat
             backgroundColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(color),
           )),
+        const SizedBox(height: 16),
+        // Nút nạp tiền
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _showAddMoneyDialog(g),
+            icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+            label: const Text('Cộng tiền vào hũ', style: TextStyle(fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color.withOpacity(0.1),
+              foregroundColor: color,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ),
       ]),
+    );
+  }
+
+  void _showAddMoneyDialog(dynamic g) {
+    final amountCtrl = TextEditingController();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? const Color(0xFFE4E1EE) : const Color(0xFF1C1C1E);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1D2E) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Nạp tiền: ${g['title']}', style: TextStyle(color: textPrimary, fontWeight: FontWeight.bold, fontSize: 18)),
+        content: TextField(
+          controller: amountCtrl,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: TextStyle(color: textPrimary),
+          decoration: InputDecoration(
+            hintText: 'Nhập số tiền (đ)',
+            hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.grey[400]),
+            filled: true,
+            fillColor: isDark ? const Color(0xFF2A2940) : const Color(0xFFF5F5F9),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final amountStr = amountCtrl.text.trim();
+              if (amountStr.isEmpty) return;
+              final amount = double.tryParse(amountStr) ?? 0;
+              if (amount <= 0) return;
+              
+              Navigator.pop(ctx);
+              
+              // Fetch a valid income category to avoid 422/404 errors
+              final cats = await ApiService.getCategories();
+              int categoryId = 1;
+              if (cats != null && cats.isNotEmpty) {
+                final incomeCats = cats.where((c) => c['category_type'] == true).toList();
+                if (incomeCats.isNotEmpty) {
+                  categoryId = incomeCats.first['category_id'] as int;
+                } else {
+                  categoryId = cats.first['category_id'] as int;
+                }
+              }
+              
+              // Giao dịch được tạo dưới dạng Thu nhập (true) để thể hiện việc nạp tiền vào quỹ tiết kiệm
+              await ApiService.createTransaction(g['id'], categoryId, amount, 'Nạp tiền tiết kiệm', true, DateTime.now().toIso8601String());
+              _fetchData();
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Đã cộng ${_formatMoneyShort(amount.toInt())} vào mục tiêu'),
+                    backgroundColor: const Color(0xFF00C096),
+                    behavior: SnackBarBehavior.floating,
+                  )
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4B49EB),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Nạp tiền'),
+          ),
+        ],
+      ),
     );
   }
 

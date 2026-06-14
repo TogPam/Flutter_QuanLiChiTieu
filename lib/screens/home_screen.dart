@@ -373,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       setState(() => _isLoading = true);
                       
                       if (existing == null) {
-                        await ApiService.createJar(title, limit, '1');
+                        await ApiService.createJar(title, limit, 1);
                       } else {
                         await ApiService.updateJar(existing.jarId, title, limit, existing.jarType.value);
                       }
