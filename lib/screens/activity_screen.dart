@@ -605,6 +605,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     final dateStr = (t['transaction_date'] ?? t['TransactionDate'])?.toString().split('T')[0] ?? '';
     final desc = t['description'] ?? t['Description'] ?? 'Giao dịch';
     final catName = t['category_name'] ?? t['CategoryName'] ?? 'Danh mục';
+    final fullName = t['full_name'] ?? t['FullName'] ?? 'Ẩn danh';
 
     return GestureDetector(
       onTap: () => _showTransactionDetails(t, isDark, cardColor, textPrimary, textSecondary, accent),
@@ -629,6 +630,8 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               Text(desc, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textPrimary)),
               const SizedBox(height: 2),
               Text('$catName • $dateStr', style: TextStyle(color: textSecondary, fontSize: 11)),
+              const SizedBox(height: 2),
+              Text('Bởi: $fullName', style: TextStyle(color: accent.withValues(alpha: 0.8), fontSize: 11, fontWeight: FontWeight.w600)),
             ])),
             Text(amountStr, style: TextStyle(
               fontWeight: FontWeight.bold, fontSize: 14,
@@ -671,6 +674,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     final catName = t['category_name'] ?? t['CategoryName'] ?? 'Danh mục';
     final jarName = t['jar_name'] ?? t['JarName'] ?? 'Hũ chi tiêu';
     final imageUrl = t['receipt_image_url'] ?? t['ReceiptImageUrl'];
+    final fullName = t['full_name'] ?? t['FullName'] ?? 'Ẩn danh';
 
     showModalBottomSheet(
       context: context,
@@ -703,6 +707,8 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               ),
               const SizedBox(height: 32),
               
+              _detailRow('Người thực hiện', fullName, Icons.person_outline_rounded, textPrimary, textSecondary),
+              const Divider(height: 24),
               _detailRow('Danh mục', catName, Icons.category_outlined, textPrimary, textSecondary),
               const Divider(height: 24),
               _detailRow('Hũ chi tiêu', jarName, Icons.account_balance_wallet_outlined, textPrimary, textSecondary),

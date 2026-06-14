@@ -195,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF1E1D2E) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Số dư đầu tháng', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+        title: Text('Opening Balance', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   _jars.first.jarId,
                   catId,
                   amount,
-                  'Số dư đầu tháng',
+                  'Opening Balance',
                   true,
                   DateTime.now().toIso8601String(),
                 );
@@ -949,9 +949,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     final amountStr = '${isIncome ? "+" : "-"}${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}đ';
                     final dateStr = (tx['transaction_date'] ?? tx['TransactionDate'])?.toString().split('T')[0] ?? '';
                     final desc = tx['description'] ?? tx['Description'] ?? 'Giao dịch';
+                    final fullName = tx['full_name'] ?? tx['FullName'] ?? 'Ẩn danh';
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _txRow(desc, dateStr, amountStr, isIncome ? Icons.trending_up_rounded : Icons.shopping_cart_rounded, !isIncome, cardColor, textPrimary, textSecondary, isDark),
+                      child: _txRow(desc, dateStr, fullName, amountStr, isIncome ? Icons.trending_up_rounded : Icons.shopping_cart_rounded, !isIncome, cardColor, textPrimary, textSecondary, isDark),
                     );
                   }).toList(),
                   const SizedBox(height: 24),
@@ -1087,7 +1088,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _txRow(String title, String sub, String amount, IconData icon, bool isExpense,
+  Widget _txRow(String title, String sub, String fullName, String amount, IconData icon, bool isExpense,
       Color cardColor, Color textPrimary, Color textSecondary, bool isDark) =>
     Container(
       padding: const EdgeInsets.all(16),
@@ -1111,6 +1112,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textPrimary)),
               const SizedBox(height: 2),
               Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: textSecondary)),
+              const SizedBox(height: 2),
+              Text('Bởi: $fullName', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF4B49EB).withValues(alpha: 0.8))),
             ]),
           ),
           const SizedBox(width: 8),
